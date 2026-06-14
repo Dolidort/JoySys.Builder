@@ -1,0 +1,14 @@
+.vs/
+Core/
+Deploy/
+Include/
+JoySys.Grafix/
+JoySys.PLCDataLink/
+JoySys.Solution/
+JoySys.Builder/.vs/
+JoySys.Builder/bin/
+JoySys.Builder/bin_0/
+JoySys.Builder/obj/
+JoySys.Builder/obj_0/
+JoySys.Builder/outputvs.vs
+JoySys.Builder/builder_tree.txt
