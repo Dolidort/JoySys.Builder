@@ -1,4 +1,21 @@
+
+# Visual Studio
 .vs/
+*.user
+*.suo
+
+# Build outputs
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+
+# NuGet packages - restored automatically
+packages/
+
+# Fody generated schema - do not commit
+FodyWeavers.xsd
+
 Core/
 Deploy/
 Include/
@@ -11,4 +28,3 @@ JoySys.Builder/bin_0/
 JoySys.Builder/obj/
 JoySys.Builder/obj_0/
 JoySys.Builder/outputvs.vs
-JoySys.Builder/builder_tree.txt
