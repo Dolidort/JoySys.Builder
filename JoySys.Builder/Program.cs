@@ -24,12 +24,14 @@ namespace JoySys.Builder
 
         static void Main()
         {
-          //  exePath = AppDomain.CurrentDomain.BaseDirectory;
+            //  exePath = AppDomain.CurrentDomain.BaseDirectory;
             //iniPath = Path.Combine(exePath, "config.ini");
             //IniFile ini = new IniFile(iniPath);
 
 
-            string iniPath = Path.Combine(@"C:\Program Files\JoySys", "config.ini");
+            string iniPath = Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                "config.ini");
             IniFile ini = new IniFile(iniPath);
 
             //dbfPath = exePath;
