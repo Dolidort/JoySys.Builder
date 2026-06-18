@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -15,6 +17,8 @@ namespace JoySys.Builder
         {
             Path = iniPath;
         }
+        [DllImport("kernel32")]
+        private static extern long WritePrivateProfileString(string section, string key, string val, string filePath);
 
         [DllImport("kernel32", CharSet = CharSet.Unicode)]
         private static extern int GetPrivateProfileString(string section, string key, string defaultValue, StringBuilder retVal, int size, string filePath);
@@ -25,6 +29,11 @@ namespace JoySys.Builder
             var retVal = new StringBuilder(1024);
             GetPrivateProfileString(section, key, defaultValue, retVal, retVal.Capacity, Path);
             return retVal.ToString();
+        }
+
+        public long Write(string section, string key, string value)
+        {
+            return WritePrivateProfileString(section, key, value, Path);
         }
     }
 }
