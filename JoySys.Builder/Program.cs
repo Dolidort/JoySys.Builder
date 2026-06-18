@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Threading;
 using System.IO;
+using System.Windows.Forms;
 
 //Update-Package -reinstall
 
@@ -14,37 +15,71 @@ namespace JoySys.Builder
 {
     internal class Program
     {
-        static string exePath;
-        static string iniPath;
         static string connectionString;
-        static string dbfName = @"variable.DBF";
-        static string dbfPath;// = "C:\\ProgramData\\AVEVA\\Citect SCADA 2018 R2\\User\\VST_HMI_Core_\\";
-        static DbfDataAccess dbf = new DbfDataAccess();
+        static readonly string dbfName = @"variable.DBF";
+        static readonly string defaultPath = "C:\\ProgramData\\";
+        static string dbfPath;
+        static readonly DbfDataAccess dbf = new DbfDataAccess();
         static List<Dictionary<string, string>> DicDBF = new List<Dictionary<string, string>>();
 
+
+        [STAThread]
         static void Main()
         {
-            //  exePath = AppDomain.CurrentDomain.BaseDirectory;
-            //iniPath = Path.Combine(exePath, "config.ini");
-            //IniFile ini = new IniFile(iniPath);
-
-
-            string iniPath = Path.Combine(
+            string curDomainIniPath = Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory,
                 "config.ini");
-            IniFile ini = new IniFile(iniPath);
 
-            //dbfPath = exePath;
-            connectionString = ini.Read("Database", "ConnectionString");
-            string tmpdbfPath = ini.Read("Paths", "ProjectPath");
-            if (!string.IsNullOrWhiteSpace(tmpdbfPath))
+            if (!File.Exists(curDomainIniPath))
             {
-                dbfPath = tmpdbfPath;
+                using (StreamWriter sw = File.CreateText(curDomainIniPath))
+                {
+                    sw.WriteLine("[Database]");
+                    sw.WriteLine("ConnectionString=Data Source=localhost;Initial Catalog=VSTUnitDB;Integrated Security=True");
+                }
+            }
+            IniFile ini = new IniFile(curDomainIniPath);
+            var iniProjectPath = ini.Read("Paths", "ProjectPath");
+
+            if (string.IsNullOrWhiteSpace(iniProjectPath) || !Directory.Exists(iniProjectPath))
+            {
+                using (var dialog = new FolderBrowserDialog())
+                {
+                    if (Directory.Exists(defaultPath))
+                        dialog.SelectedPath = defaultPath;
+
+                    dialog.Description =
+                        "Select SCADA Project Folder\n" +
+                        "Please note that the folder must contain a file called '" + dbfName + "'";
+
+                    if (dialog.ShowDialog() != DialogResult.OK)
+                    {
+                        Console.WriteLine("SCADA project path was not selected. Builder cancelled.");
+                        return;
+                    }
+
+                    iniProjectPath = dialog.SelectedPath;
+                    ini.Write("Paths", "ProjectPath", iniProjectPath);
+
+                    Console.WriteLine("Selected:");
+                    Console.WriteLine(iniProjectPath);
+                }
             }
 
-            DicDBF = dbf.ReadDbf(dbfPath + dbfName);
+            connectionString = ini.Read("Database", "ConnectionString");
+            dbfPath = iniProjectPath;
 
-            Console.WriteLine($"Reading from: {dbfPath + dbfName}");
+            string dbfFilePath = Path.Combine(dbfPath, dbfName);
+
+            if (!File.Exists(dbfFilePath))
+            {
+                Console.WriteLine($"Required file not found: {dbfFilePath}");
+                return;
+            }
+
+            DicDBF = dbf.ReadDbf(dbfFilePath);
+
+            Console.WriteLine($"Reading from: {dbfFilePath}");
             Console.WriteLine($"Records read: {DicDBF.Count}");
             Signpost.VSTAscii();
 
