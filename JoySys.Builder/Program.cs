@@ -35,7 +35,8 @@ namespace JoySys.Builder
                 using (StreamWriter sw = File.CreateText(curDomainIniPath))
                 {
                     sw.WriteLine("[Database]");
-                    sw.WriteLine("ConnectionString=Data Source=localhost;Initial Catalog=VSTUnitDB;Integrated Security=True");
+                    sw.WriteLine("Server=.\\SQLEXPRESS");
+                    sw.WriteLine("Database=VSTUnitDB");
                 }
             }
             IniFile ini = new IniFile(curDomainIniPath);
@@ -66,7 +67,6 @@ namespace JoySys.Builder
                 }
             }
 
-            connectionString = ini.Read("Database", "ConnectionString");
             dbfPath = iniProjectPath;
 
             string dbfFilePath = Path.Combine(dbfPath, dbfName);
@@ -83,6 +83,30 @@ namespace JoySys.Builder
             Console.WriteLine($"Records read: {DicDBF.Count}");
             Signpost.VSTAscii();
 
+            string server = ini.Read("Database", "Server");
+            string databaseName = ini.Read("Database", "Database");
+
+            try
+            {
+                SqlDataAccess.EnsureDatabaseExists(
+                    server,
+                    databaseName);
+
+                connectionString =
+                    SqlDataAccess.BuildConnectionString(
+                        server,
+                        databaseName);
+
+                var db = new SqlDataAccess(connectionString);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Failed to create or verify database:\n" + ex.Message,
+                    "Database Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
 
             CreateRecipeTableIfNotExists();
             CreateAndInsert("tbTags", DicDBF, true);

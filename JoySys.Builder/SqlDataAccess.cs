@@ -118,7 +118,60 @@ namespace JoySys.Builder
             return Task.Run(() => DropTable(tableName));
         }
 
+        public static void EnsureDatabaseExists(string server, string databaseName)
+        {
 
+            if (string.IsNullOrWhiteSpace(server))
+                throw new ArgumentException("Server name is missing.", nameof(server));
+
+            if (string.IsNullOrWhiteSpace(databaseName))
+                throw new ArgumentException("Database name is missing.", nameof(databaseName));
+
+            string masterConnectionString =
+                $"Server={server};Initial Catalog=master;Integrated Security=True;TrustServerCertificate=True;";
+
+            using (SqlConnection connection = new SqlConnection(masterConnectionString))
+            {
+                connection.Open();
+
+                string checkSql = @"
+                    SELECT COUNT(*)
+                    FROM sys.databases
+                    WHERE name = @DatabaseName";
+
+                using (SqlCommand checkCommand = new SqlCommand(checkSql, connection))
+                {
+                    checkCommand.Parameters.AddWithValue("@DatabaseName", databaseName);
+
+                    int count = (int)checkCommand.ExecuteScalar();
+
+                    if (count > 0)
+                        return;
+                }
+                string safeDatabaseName = databaseName.Replace("]", "]]");
+
+                string createSql = $@"
+                    CREATE DATABASE [{safeDatabaseName}]";
+
+                using (SqlCommand createCommand = new SqlCommand(createSql, connection))
+                {
+                    createCommand.ExecuteNonQuery();
+                }
+                return;
+            }
+        }
+
+
+        public static string BuildConnectionString(string server, string databaseName)
+        {
+            return new SqlConnectionStringBuilder
+            {
+                DataSource = server,
+                InitialCatalog = databaseName,
+                IntegratedSecurity = true,
+                TrustServerCertificate = true
+            }.ConnectionString;
+        }
 
         public bool TableExists(string tableName)
         {
