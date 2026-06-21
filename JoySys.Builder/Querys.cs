@@ -173,7 +173,149 @@ namespace JoySys.Builder
                     ";
         }
 
+        static public string CreateMissingRuntimeTablesIfNotExists()
+        {
+            return @"
+                SET NOCOUNT ON;
 
+                /* ---------- tbFormula ---------- */
+                IF OBJECT_ID(N'[dbo].[tbFormula]', N'U') IS NULL
+                BEGIN
+                    CREATE TABLE [dbo].[tbFormula] (
+                        [id] INT IDENTITY(1,1) NOT NULL,
+                        [Name] NVARCHAR(50) NULL,
+                        [Formula] NVARCHAR(MAX) NULL,
+                        [Description] NVARCHAR(MAX) NULL,
+                        CONSTRAINT [PK_tbFormula] PRIMARY KEY CLUSTERED ([id] ASC)
+                    );
+                END;
+
+                IF OBJECT_ID(N'[dbo].[tbFormula]', N'U') IS NOT NULL
+                BEGIN
+                    IF COL_LENGTH('dbo.tbFormula', 'Name') IS NULL
+                        ALTER TABLE [dbo].[tbFormula] ADD [Name] NVARCHAR(50) NULL;
+
+                    IF COL_LENGTH('dbo.tbFormula', 'Formula') IS NULL
+                        ALTER TABLE [dbo].[tbFormula] ADD [Formula] NVARCHAR(MAX) NULL;
+
+                    IF COL_LENGTH('dbo.tbFormula', 'Description') IS NULL
+                        ALTER TABLE [dbo].[tbFormula] ADD [Description] NVARCHAR(MAX) NULL;
+                END;
+
+
+                /* ---------- tbGrafix ---------- */
+                IF OBJECT_ID(N'[dbo].[tbGrafix]', N'U') IS NULL
+                BEGIN
+                    CREATE TABLE [dbo].[tbGrafix] (
+                        [Id] INT IDENTITY(1,1) NOT NULL,
+                        [Series] NVARCHAR(MAX) NULL,
+                        [Color] NVARCHAR(MAX) NULL,
+                        [IsAxis] INT NULL,
+                        [IsLog] INT NULL,
+                        CONSTRAINT [PK_tbGrafix] PRIMARY KEY CLUSTERED ([Id] ASC)
+                    );
+                END;
+
+                IF OBJECT_ID(N'[dbo].[tbGrafix]', N'U') IS NOT NULL
+                BEGIN
+                    IF COL_LENGTH('dbo.tbGrafix', 'Series') IS NULL
+                        ALTER TABLE [dbo].[tbGrafix] ADD [Series] NVARCHAR(MAX) NULL;
+
+                    IF COL_LENGTH('dbo.tbGrafix', 'Color') IS NULL
+                        ALTER TABLE [dbo].[tbGrafix] ADD [Color] NVARCHAR(MAX) NULL;
+
+                    IF COL_LENGTH('dbo.tbGrafix', 'IsAxis') IS NULL
+                        ALTER TABLE [dbo].[tbGrafix] ADD [IsAxis] INT NULL;
+
+                    IF COL_LENGTH('dbo.tbGrafix', 'IsLog') IS NULL
+                        ALTER TABLE [dbo].[tbGrafix] ADD [IsLog] INT NULL;
+                END;
+
+
+                /* ---------- tbProcesses ---------- */
+                IF OBJECT_ID(N'[dbo].[tbProcesses]', N'U') IS NULL
+                BEGIN
+                    CREATE TABLE [dbo].[tbProcesses] (
+                        [ID] INT IDENTITY(1,1) NOT NULL,
+                        [Name] NVARCHAR(255) NOT NULL,
+                        [StartDT] DATETIME NULL,
+                        [EndDT] DATETIME NULL,
+                        [Description] NVARCHAR(MAX) NULL,
+                        [CreatedDate] DATETIME NOT NULL CONSTRAINT [DF_tbProcesses_CreatedDate] DEFAULT (GETDATE()),
+                        [ModifiedDate] DATETIME NOT NULL CONSTRAINT [DF_tbProcesses_ModifiedDate] DEFAULT (GETDATE()),
+                        CONSTRAINT [PK_tbProcesses] PRIMARY KEY CLUSTERED ([ID] ASC)
+                    );
+                END;
+
+                IF OBJECT_ID(N'[dbo].[tbProcesses]', N'U') IS NOT NULL
+                BEGIN
+                    IF COL_LENGTH('dbo.tbProcesses', 'Name') IS NULL
+                        ALTER TABLE [dbo].[tbProcesses] ADD [Name] NVARCHAR(255) NOT NULL CONSTRAINT [DF_tbProcesses_Name] DEFAULT (N'');
+
+                    IF COL_LENGTH('dbo.tbProcesses', 'StartDT') IS NULL
+                        ALTER TABLE [dbo].[tbProcesses] ADD [StartDT] DATETIME NULL;
+
+                    IF COL_LENGTH('dbo.tbProcesses', 'EndDT') IS NULL
+                        ALTER TABLE [dbo].[tbProcesses] ADD [EndDT] DATETIME NULL;
+
+                    IF COL_LENGTH('dbo.tbProcesses', 'Description') IS NULL
+                        ALTER TABLE [dbo].[tbProcesses] ADD [Description] NVARCHAR(MAX) NULL;
+
+                    IF COL_LENGTH('dbo.tbProcesses', 'CreatedDate') IS NULL
+                        ALTER TABLE [dbo].[tbProcesses] ADD [CreatedDate] DATETIME NOT NULL CONSTRAINT [DF_tbProcesses_CreatedDate_Alter] DEFAULT (GETDATE());
+
+                    IF COL_LENGTH('dbo.tbProcesses', 'ModifiedDate') IS NULL
+                        ALTER TABLE [dbo].[tbProcesses] ADD [ModifiedDate] DATETIME NOT NULL CONSTRAINT [DF_tbProcesses_ModifiedDate_Alter] DEFAULT (GETDATE());
+                END;
+
+
+                /* ---------- tbTagFormattedValues ---------- */
+                IF OBJECT_ID(N'[dbo].[tbTagFormattedValues]', N'U') IS NULL
+                BEGIN
+                    CREATE TABLE [dbo].[tbTagFormattedValues] (
+                        [ID] INT IDENTITY(1,1) NOT NULL,
+                        [TagName] NVARCHAR(255) NOT NULL,
+                        [FormattedValue] NVARCHAR(100) NULL,
+                        [Timestamp] DATETIME NULL,
+                        CONSTRAINT [PK_tbTagFormattedValues] PRIMARY KEY CLUSTERED ([ID] ASC)
+                    );
+                END;
+
+                IF OBJECT_ID(N'[dbo].[tbTagFormattedValues]', N'U') IS NOT NULL
+                BEGIN
+                    IF COL_LENGTH('dbo.tbTagFormattedValues', 'TagName') IS NULL
+                        ALTER TABLE [dbo].[tbTagFormattedValues] ADD [TagName] NVARCHAR(255) NOT NULL CONSTRAINT [DF_tbTagFormattedValues_TagName] DEFAULT (N'');
+
+                    IF COL_LENGTH('dbo.tbTagFormattedValues', 'FormattedValue') IS NULL
+                        ALTER TABLE [dbo].[tbTagFormattedValues] ADD [FormattedValue] NVARCHAR(100) NULL;
+
+                    IF COL_LENGTH('dbo.tbTagFormattedValues', 'Timestamp') IS NULL
+                        ALTER TABLE [dbo].[tbTagFormattedValues] ADD [Timestamp] DATETIME NULL;
+                END;
+
+
+                /* ---------- Helpful indexes ---------- */
+                IF NOT EXISTS (
+                    SELECT 1 FROM sys.indexes
+                    WHERE name = N'IX_tbTagFormattedValues_TagName_Timestamp'
+                      AND object_id = OBJECT_ID(N'dbo.tbTagFormattedValues')
+                )
+                BEGIN
+                    CREATE INDEX [IX_tbTagFormattedValues_TagName_Timestamp]
+                    ON [dbo].[tbTagFormattedValues] ([TagName], [Timestamp]);
+                END;
+
+                IF NOT EXISTS (
+                    SELECT 1 FROM sys.indexes
+                    WHERE name = N'IX_tbProcesses_Name'
+                      AND object_id = OBJECT_ID(N'dbo.tbProcesses')
+                )
+                BEGIN
+                    CREATE INDEX [IX_tbProcesses_Name]
+                    ON [dbo].[tbProcesses] ([Name]);
+                END;
+                ";
+        }
 
         static public string BuildRecreateTableQuery(string sourceName, string targetTableName, string ColTypeName = "rType")
         {
@@ -199,13 +341,12 @@ namespace JoySys.Builder
                 [{ColTypeName}] NVARCHAR(255)
             );";
 
-           
+
 
         }
 
 
-
-        static public string BuildRecipeTypesQuery(string sourceName, string targetTableName, string ColTypeName="rType")
+        static public string BuildRecipeTypesQuery(string sourceName, string targetTableName, string ColTypeName = "rType")
         {
             if (string.IsNullOrWhiteSpace(sourceName))
                 throw new ArgumentException("sourceName is required", nameof(sourceName));

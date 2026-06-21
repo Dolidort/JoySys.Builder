@@ -110,9 +110,10 @@ namespace JoySys.Builder
 
             CreateRecipeTableIfNotExists();
             CreateAndInsert("tbTags", DicDBF, true);
+            CreateRuntimeSupportTablesIfNotExists();
             Create_StoredProcedures_UpdateSchema();
             //Create_StoredProcedures_UpdateIntegratedModuleRecipeFields();
-            CreateAndLoadRecipeType("TypeRec", "dbo.tbRecipeType","rType");
+            CreateAndLoadRecipeType("TypeRec", "dbo.tbRecipeType", "rType");
             CreateAndLoadRecipeType("ModuleGroupRec", "dbo.tbRecipeModuleGroup", "ModuleGroup");
 
             Signpost.SpinnerHelper.StartSpinner("Please wait...");
@@ -294,16 +295,21 @@ namespace JoySys.Builder
                     { "Description", "NVARCHAR(MAX)" },
                 };
 
-                db.CreateTable("tbRecipe", columns, false,false,true);
+                db.CreateTable("tbRecipe", columns, false, false, true);
 
-              //  Console.WriteLine("Table 'tbRecipe' created.");
+                //  Console.WriteLine("Table 'tbRecipe' created.");
             }
             else
             {
-               // Console.WriteLine("Table 'tbRecipe' already exists. Skipping creation.");
+                // Console.WriteLine("Table 'tbRecipe' already exists. Skipping creation.");
             }
         }
 
+        public static void CreateRuntimeSupportTablesIfNotExists()
+        {
+            SqlDataAccess db = new SqlDataAccess(connectionString);
+            db.ExecuteNonQuery(Querys.CreateMissingRuntimeTablesIfNotExists());
+        }
 
         public static void Create_StoredProcedures_UpdateSchema()
         {
@@ -319,11 +325,11 @@ namespace JoySys.Builder
         //}
 
 
-        public static void CreateAndLoadRecipeType(string sourceName, string targetTableName,string ColTypeName)
+        public static void CreateAndLoadRecipeType(string sourceName, string targetTableName, string ColTypeName)
         {
             SqlDataAccess db = new SqlDataAccess(connectionString);
             db.ExecuteNonQuery(Querys.BuildRecreateTableQuery(sourceName, targetTableName, ColTypeName));
-            db.ExecuteNonQuery(Querys.BuildRecipeTypesQuery(sourceName,targetTableName, ColTypeName));
+            db.ExecuteNonQuery(Querys.BuildRecipeTypesQuery(sourceName, targetTableName, ColTypeName));
         }
 
 
