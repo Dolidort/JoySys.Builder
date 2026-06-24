@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace JoySys.Builder
 {
@@ -14,29 +15,58 @@ namespace JoySys.Builder
         {
             var result = new List<Dictionary<string, string>>();
 
-            var stream = File.OpenRead(dbfPath);
-            var reader = XBaseDataReader.Create(stream);
-
-            while (reader.Read())
+            try
             {
-                var row = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-                for (int i = 0; i < reader.FieldCount; i++)
+                using (var stream = new FileStream(
+                    dbfPath,
+                    FileMode.Open,
+                    FileAccess.Read,
+                    FileShare.ReadWrite))
                 {
-                    string fieldName = reader.GetName(i);
-                    object value = reader.GetValue(i);
-                    string strValue = value?.ToString() ?? string.Empty;
+                    XBaseDataReader reader = null;
 
-                    row[fieldName] = strValue;
+                    try
+                    {
+                        reader = XBaseDataReader.Create(stream);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Error opening DBF file: " + ex.Message);
+                    }
+
+                    using (reader)
+                    {
+                        while (reader.Read())
+                        {
+                            var row = new Dictionary<string, string>();
+
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                string columnName = reader.GetName(i);
+                                object value = reader.GetValue(i);
+
+                                row[columnName] = value == null || value == DBNull.Value
+                                    ? ""
+                                    : value.ToString();
+                            }
+
+                            result.Add(row);
+                        }
+                    }
                 }
-
-                result.Add(row);
+                return result;
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    ex.ToString(),
+                    "ReadDbf failed",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
 
-            return result;
+                throw;
+            }
         }
-
-
         public Dictionary<string, string> GetDbfSchema(string dbfPath)
         {
             var schema = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
